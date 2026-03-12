@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>TILIMANITELIMA</title>
+
+<!-- Tailwind CSS pour design moderne -->
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.2/dist/tailwind.min.css" rel="stylesheet">
+
+<!-- Leaflet CSS & JS pour la carte -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<style>
+  html, body { height: 100%; margin: 0; }
+  #map { height: 50vh; width: 100%; }
+  .driver-marker { width: 30px; }
+  .popup-confirm { font-size: 16px; font-weight: bold; }
+</style>
+</head>
+<body class="bg-gray-100 font-sans flex flex-col h-screen">
+
+<!-- Header -->
+<header class="text-center p-4 bg-blue-600 text-white shadow-md">
+  <h1 class="text-2xl font-bold">TILIMANITELIMA</h1>
+  <p class="text-sm mt-1">Réservez une moto taxi à Bamako</p>
+</header>
+
+<!-- Carte -->
+<div id="map"></div>
+
+<!-- Formulaire flottant (responsive) -->
+<div class="bg-white rounded-t-xl shadow-xl p-4 flex flex-col gap-2">
+  <input id="name" placeholder="Nom" class="border p-2 rounded w-full">
+  <input id="phone" placeholder="Téléphone" class="border p-2 rounded w-full">
+  <input id="departure" placeholder="Lieu de départ" class="border p-2 rounded w-full">
+  <input id="destination" placeholder="Destination" class="border p-2 rounded w-full">
+
+  <button id="orderBtn" class="bg-blue-600 text-white py-2 px-4 rounded w-full hover:bg-blue-700 mt-2">
+    Réserver maintenant
+  </button>
+</div>
+
+<script>
+  // Initialisation de la carte
+  var map = L.map('map').setView([12.6392, -8.0029], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+
+  // Icône chauffeurs
+  var driverIcon = L.icon({
+    iconUrl: 'https://img.icons8.com/emoji/48/motorcycle-emoji.png',
+    iconSize: [30, 30]
+  });
+
+  var drivers = [];
+
+  // Fonction pour créer des chauffeurs animés
+  function spawnDrivers(lat, lon, count=5){
+    for(let i=0; i<count; i++){
+      const offsetLat = (Math.random() - 0.5) / 100;
+      const offsetLon = (Math.random() - 0.5) / 100;
+      let marker = L.marker([lat + offsetLat, lon + offsetLon], {icon: driverIcon}).addTo(map);
+      drivers.push(marker);
+    }
+  }
+
+  // Déplacer les chauffeurs aléatoirement toutes les 2s
+  function animateDrivers(){
+    drivers.forEach(marker => {
+      const lat = marker.getLatLng().lat + (Math.random()-0.5)/500;
+      const lon = marker.getLatLng().lng + (Math.random()-0.5)/500;
+      marker.setLatLng([lat, lon]);
+    });
+  }
+  setInterval(animateDrivers, 2000);
+
+  // Géolocalisation utilisateur
+  var userLat = 12.6392, userLon = -8.0029; // par défaut Bamako
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(function(position){
+      userLat = position.coords.latitude;
+      userLon = position.coords.longitude;
+      L.marker([userLat, userLon]).addTo(map).bindPopup("Vous êtes ici").openPopup();
+      map.setView([userLat, userLon], 15);
+      spawnDrivers(userLat, userLon, 8);
+    });
+  } else {
+    alert("Géolocalisation non supportée !");
+    spawnDrivers(userLat, userLon, 8);
+  }
+
+  // Réservation
+  document.getElementById("orderBtn").addEventListener("click", function(){
+    const nom = document.getElementById("name").value;
+    const tel = document.getElementById("phone").value;
+    const depart = document.getElementById("departure").value;
+    const destination = document.getElementById("destination").value;
+
+    if(!nom || !tel || !depart || !destination){
+      alert("Veuillez remplir tous les champs !");
+      return;
+    }
+
+    // Popup confirmation
+    alert(`✅ Commande reçue !\nNom: ${nom}\nTéléphone: ${tel}\nDépart: ${depart}\nDestination: ${destination}\nUn chauffeur proche est en route.`);
+  });
+</script>
+</body>
+</html>
